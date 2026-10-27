@@ -2,7 +2,7 @@ import json
 import subprocess
 import re
 
-path = "/Users/keyshuo/LLM-Project/src/llm_project/test/question.jsonl"
+path = "/Users/keyshuo/py-test/LLM-Project/src/llm_project/test/question.jsonl"
 with open(path, encoding="utf-8") as f:
     datas = [json.loads(line) for line in f if line.strip()]
 
@@ -33,3 +33,4 @@ for item in datas:
     print("=" * 60)
     print("Q:", question)
     print("A:", answer)
+    print(r.stderr)

@@ -1,6 +1,6 @@
 import argparse
 import time
-
+import sys
 import structlog
 from openai import OpenAI
 from pydantic import ValidationError
@@ -67,8 +67,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except ValidationError as e:
-        log.error("配置错误，请检查 .env 文件", errors=e.errors())
-        raise SystemExit(1) from None
+    from llm_project.agent.errors import run_guarded
+    run_guarded(main, debug="--verbose" in sys.argv)
