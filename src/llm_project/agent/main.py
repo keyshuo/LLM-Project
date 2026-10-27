@@ -1,9 +1,12 @@
 import argparse
 import time
 import sys
+from typing import cast                                   # ★ 新增
+
 import structlog
 from openai import OpenAI
-from pydantic import ValidationError
+from openai.types.chat import ChatCompletionMessageParam   # ★ 新增
+from openai.types import CompletionUsage                   # ★ 新增
 
 from llm_project.agent.config import settings
 from llm_project.agent.logging_config import configure_logging
@@ -31,13 +34,19 @@ def main() -> None:
         stream=args.stream,
     )
 
+    # ★ 关键改动 1：把 messages 显式 cast 成 openai 要求的类型
+    messages = cast(
+        list[ChatCompletionMessageParam],
+        [m.model_dump() for m in req.messages],
+    )
+
     start = time.perf_counter()
-    usage = None
+    usage: CompletionUsage | None = None                   # ★ 关键改动 2：加类型注解
 
     if req.stream:
         response = client.chat.completions.create(
             model=req.model,
-            messages=[m.model_dump() for m in req.messages],
+            messages=messages,                             # ★ 用已 cast 的 messages
             stream=True,
             stream_options={"include_usage": True},
         )
@@ -48,12 +57,12 @@ def main() -> None:
                 usage = chunk.usage
         print()
     else:
-        response = client.chat.completions.create(
+        completion = client.chat.completions.create(       # ★ 改名避免和上面的 response 冲突
             model=req.model,
-            messages=[m.model_dump() for m in req.messages],
+            messages=messages,                             # ★ 用已 cast 的 messages
         )
-        print(response.choices[0].message.content)
-        usage = response.usage
+        print(completion.choices[0].message.content)       # ★ 对应改名
+        usage = completion.usage                           # ★ 对应改名
 
     elapsed_ms = round((time.perf_counter() - start) * 1000, 1)
     log.info(
@@ -61,8 +70,8 @@ def main() -> None:
         model=req.model,
         stream=req.stream,
         elapsed_ms=elapsed_ms,
-        input_tokens=getattr(usage, "prompt_tokens", None),
-        output_tokens=getattr(usage, "completion_tokens", None),
+        input_tokens=usage.prompt_tokens if usage else None,     # ★ 改 3：去掉 getattr
+        output_tokens=usage.completion_tokens if usage else None, # ★ 改 3：去掉 getattr
     )
 
 

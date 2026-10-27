@@ -10,7 +10,7 @@ print("第一条示例:", datas[0])
 
 LOG_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}")
 
-def clean(text):
+def clean(text: str) -> str:
     lines = [l for l in text.splitlines() if not LOG_RE.match(l.strip())]
     return "\n".join(lines).replace("**", "").strip()
 

@@ -1,5 +1,4 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field
 from pydantic import model_validator
 
 
@@ -15,7 +14,7 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _check_required(self):
-        missing = []
+        missing: list[str] = []
         if not self.openai_api_key:
             missing.append("OPENAI_API_KEY")
         if missing:
